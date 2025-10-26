@@ -1,0 +1,16 @@
+{
+  "scripts": {
+    "migrate:make": "knex migrate:make",
+    "migrate:latest": "knex migrate:latest",
+    "migrate:rollback": "knex migrate:rollback",
+    "migrate:down": "knex migrate:down",
+    "seed:make": "knex seed:make",
+    "seed:run" : "knex seed:run",
+  },
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "knex": "^3.1.0",
+    "pg": "^8.16.3"
+  },
+  "type": "module"
+}
