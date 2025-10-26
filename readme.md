@@ -142,7 +142,7 @@ Let me explain what's happening here for those new to reading PostgreSQL query p
 2. **Bitmap Heap Scan**: It then goes to the actual table (the heap) to fetch the full row data
 3. **Heap Blocks: exact=40541**: It had to read 40,541 blocks from disk to get all the data
 
-The problem is that even with an index(It found 42,706 rows very quickly in about 62 ms.), PostgreSQL has to scan through a massive table to find and retrieve these rows. The data for product 45 is scattered all over the 3.2GB table.
+The problem is that even with an index, PostgreSQL has to scan through a massive table to find and retrieve these rows. The data for product 45 is scattered all over the 3.2GB table.
 
 ## Understanding the Query Pattern
 
@@ -181,6 +181,30 @@ I chose **hash partitioning on `product_id`** because:
 - We have 1,000 products distributed randomly
 - Hash partitioning will evenly distribute the data across partitions
 - We don't care which partition holds which product, we just want even distribution
+
+### Why Not Range Partitioning on product_id?
+
+You might be thinking: "Why not use range partitioning? Like products 1-250 in partition 0, 251-500 in partition 1, etc."
+
+Here's the problem: **we don't control how product_ids are assigned**.
+
+In a real system, products might be created by different sellers, imported from external catalogs, or generated through various flows. There's no guarantee that products with similar characteristics (same seller, same category, similar popularity) will have sequential IDs.
+
+Even if we did control product_ids and could ensure related products had sequential IDs (like all products from the same shop in a specific range), we'd risk creating **hot partitions**.
+
+Imagine this scenario:
+- Products 1-250 are from a popular electronics shop
+- Products 251-500 are from a small boutique
+- Products 501-750 are from another huge retailer
+
+With range partitioning:
+- Partition 0 gets hammered with traffic (hot partition)
+- Partition 1 barely gets any queries (cold partition)
+- Partition 2 gets moderate traffic
+
+This defeats the purpose of partitioning. You want even distribution of both data AND query load.
+
+Hash partitioning solves this by distributing products pseudo-randomly across partitions. Popular products and unpopular products get mixed evenly, so no single partition becomes a bottleneck.
 
 ## Creating the Partitioned Table
 
@@ -496,5 +520,3 @@ In my case:
 The key was understanding my access pattern (always query by product_id) and choosing the right partitioning strategy (hash partitioning for even distribution).
 
 Before you add expensive read replicas or throw more hardware at the problem, consider whether your data access patterns could benefit from partitioning. You might be surprised at what PostgreSQL can handle with the right table structure.
-
----
