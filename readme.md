@@ -520,3 +520,5 @@ In my case:
 The key was understanding my access pattern (always query by product_id) and choosing the right partitioning strategy (hash partitioning for even distribution).
 
 Before you add expensive read replicas or throw more hardware at the problem, consider whether your data access patterns could benefit from partitioning. You might be surprised at what PostgreSQL can handle with the right table structure.
+
+*Full code is available on GitHub https://github.com/anasdevv/partitioning-demo. If you're working with large tables in PostgreSQL, I hope this helps you understand when and how to use partitioning effectively.*
